@@ -49,12 +49,11 @@ FROM country
 GROUP BY region;
 
 -- 7. Count the number of cities in each country and sort by the highest count.
-SELECT city.Name, country.Name, COUNT(city.ID)  AS TotalCities
+SELECT city.Name, COUNT(city.ID)  AS TotalCities
 FROM country
 JOIN city ON city.CountryCode = country.Code
-GROUP BY 
+GROUP BY city.Name
 ORDER BY TotalCities DESC;
-
 
 
 -- 8. Display the top 10 largest cities along with their country name.
@@ -80,23 +79,13 @@ AND countrylanguage.IsOfficial = 'F';
 -- 11. Find countries where the population tripled in the past 50 years (if historical data is available).
 
 
-
-
 -- 12. List the richest and poorest countries in each continent based on GNP (Gross National Product).
-SELECT continent.Name AS continentName,
-	MAX(country.GNP) AS richestGNP,
-	(SELECT country.Name
-	FROM country
-	WHERE country.GNP = MAX(country.GNP)
-	AND country.Continent = continent.Name) AS richestCountry,
-	MIN(country.GNP) AS poorestGNP,
-	(SELECT country.Name
-	FROM country
-    WHERE country.GNP = MIN(country.GNP)
-	AND country.Continent = continent.Name) AS poorestCountry
- FROM country
- JOIN continent ON country.Continent = continent.Code
- GROUP BY continent.Name;
+SELECT continent,
+       (SELECT name FROM country c1 WHERE c1.continent = c.continent ORDER BY gnp DESC LIMIT 1) AS richest_country,
+       (SELECT gnp FROM country c1 WHERE c1.continent = c.continent ORDER BY gnp DESC LIMIT 1) AS richest_gnp,
+       (SELECT name FROM country c2 WHERE c2.continent = c.continent ORDER BY gnp ASC LIMIT 1) AS poorest_country,
+       (SELECT gnp FROM country c2 WHERE c2.continent = c.continent ORDER BY gnp ASC LIMIT 1) AS poorest_gnp
+FROM (SELECT DISTINCT continent FROM country) c;
 
 
 -- 13. Identify countries with a life expectancy below the global average.
@@ -105,7 +94,7 @@ FROM country
 WHERE country.LifeExpectancy < (SELECT AVG(LifeExpectancy) FROM country);
 
 
--- Retrieve the capital cities of countries with a population above 100 million.
+-- 14. Retrieve the capital cities of countries with a population above 100 million.
 SELECT city.ID, city.Name AS capitalCity
 FROM country
 JOIN city ON country.Capital = city.ID
@@ -113,4 +102,8 @@ WHERE country.Population > 100000000;
 
 
 -- 15. Find the continent with the highest number of countries.
-
+SELECT continent, COUNT(*) AS NumberCount
+FROM country
+GROUP BY continent
+ORDER BY NumberCount DESC
+LIMIT 1;
